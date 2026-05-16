@@ -6,6 +6,8 @@ pub enum Error {
     EmptyResponse,
     #[error("OAuth error")]
     OAuthError(#[from] crate::oauth::Error),
+    #[error("Missing href")]
+    MissingHref,
 }
 
 struct ResourceIterator {
@@ -36,6 +38,27 @@ pub fn get_albums(
     token: crate::oauth::Token,
 ) -> impl ExactSizeIterator<Item = Result<serde_json::Value, Error>> {
     get_resource(token, "albums")
+}
+
+pub fn get_playlists(
+    token: crate::oauth::Token,
+) -> impl ExactSizeIterator<Item = Result<serde_json::Value, Error>> {
+    get_resource(token.clone(), "playlists").map(move |p| {
+        get(
+            token.clone(),
+            p?["href"].as_str().ok_or(Error::MissingHref)?,
+        )
+    })
+}
+
+fn get(token: crate::oauth::Token, url: &str) -> Result<serde_json::Value, Error> {
+    let http_client = reqwest::blocking::Client::new();
+    let value = http_client
+        .get(url)
+        .bearer_auth(token.access_token())
+        .send()?
+        .json()?;
+    Ok(value)
 }
 
 // https://api.spotify.com/v1/me/albums

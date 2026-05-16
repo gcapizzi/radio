@@ -17,7 +17,7 @@ fn main() -> Result<()> {
         .get("spotify")
         .ok_or(anyhow!("Spotify not configured"))?;
     let token = radio::spotify::login(&app)?;
-    let albums = radio::spotify::get_albums(token);
+    let albums = radio::spotify::get_playlists(token);
     for item in albums.progress() {
         print_item(&item?)?;
     }
