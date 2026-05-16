@@ -8,7 +8,7 @@ pub enum Error {
     OAuthError(#[from] crate::oauth::Error),
 }
 
-pub struct ResourceList {
+struct ResourceIterator {
     items: Vec<serde_json::Value>,
     http_client: reqwest::blocking::Client,
     token: crate::oauth::Token,
@@ -32,7 +32,7 @@ pub fn login(app: &crate::oauth::App) -> Result<crate::oauth::Token, Error> {
     Ok(crate::oauth::login(app, &SERVICE)?)
 }
 
-pub fn get_albums(token: crate::oauth::Token) -> ResourceList {
+pub fn get_albums(token: crate::oauth::Token) -> ResourceIterator {
     get_resource(token, "albums")
 }
 
@@ -43,16 +43,16 @@ pub fn get_albums(token: crate::oauth::Token) -> ResourceList {
 // https://api.spotify.com/v1/me/playlists
 // https://api.spotify.com/v1/me/shows
 // https://api.spotify.com/v1/me/tracks
-fn get_resource(token: crate::oauth::Token, resource_name: &str) -> ResourceList {
-    ResourceList::new(
+fn get_resource(token: crate::oauth::Token, resource_name: &str) -> ResourceIterator {
+    ResourceIterator::new(
         token,
         format!("https://api.spotify.com/v1/me/{resource_name}"),
     )
 }
 
-impl ResourceList {
-    pub fn new(token: crate::oauth::Token, url: String) -> ResourceList {
-        ResourceList {
+impl ResourceIterator {
+    pub fn new(token: crate::oauth::Token, url: String) -> ResourceIterator {
+        ResourceIterator {
             items: Vec::new(),
             http_client: reqwest::blocking::Client::new(),
             token: token,
@@ -77,7 +77,7 @@ impl ResourceList {
     }
 }
 
-impl Iterator for ResourceList {
+impl Iterator for ResourceIterator {
     type Item = Result<serde_json::Value, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -90,7 +90,7 @@ impl Iterator for ResourceList {
     }
 }
 
-impl ExactSizeIterator for ResourceList {
+impl ExactSizeIterator for ResourceIterator {
     fn len(&self) -> usize {
         self.total as usize
     }
