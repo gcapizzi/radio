@@ -32,7 +32,9 @@ pub fn login(app: &crate::oauth::App) -> Result<crate::oauth::Token, Error> {
     Ok(crate::oauth::login(app, &SERVICE)?)
 }
 
-pub fn get_albums(token: crate::oauth::Token) -> ResourceIterator {
+pub fn get_albums(
+    token: crate::oauth::Token,
+) -> impl ExactSizeIterator<Item = Result<serde_json::Value, Error>> {
     get_resource(token, "albums")
 }
 
